@@ -362,8 +362,11 @@ void Songs::filter_internal() {
 			std::shared_lock<std::shared_mutex> l(m_mutex);
 			filtered = m_songs;
 		} else {
+			std::string preprocessed_filter = m_filter;
+			preprocessed_filter.erase(std::remove_if(preprocessed_filter.begin(), preprocessed_filter.end(),
+				[](auto const& c) -> bool { return !std::isalnum(c); }), preprocessed_filter.end());
 			auto filter = icu::UnicodeString::fromUTF8(
-				UnicodeUtil::convertToUTF8(m_filter)
+				UnicodeUtil::convertToUTF8(preprocessed_filter)
 			);
 			icu::ErrorCode icuError;
 
@@ -379,7 +382,7 @@ void Songs::filter_internal() {
 
 		  // If search is not empty, filter by search term.
 				if (!m_filter.empty()) {
-					icu::StringSearch search = icu::StringSearch(filter, icu::UnicodeString::fromUTF8((*it).strFull()), UnicodeUtil::m_searchCollator.get(), nullptr, icuError);
+					icu::StringSearch search = icu::StringSearch(filter, icu::UnicodeString::fromUTF8((*it).strSearch()), UnicodeUtil::m_searchCollator.get(), nullptr, icuError);
 					return (search.first(icuError) != USEARCH_DONE);
 					}
 

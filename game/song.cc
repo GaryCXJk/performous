@@ -249,6 +249,26 @@ std::string Song::strFull() const {
     return title + "\n" + artist + "\n" + genre + "\n" + edition + "\n" + path.string();
 }
 
+std::string Song::strSearch() const {
+    std::string searchStr = "";
+    std::vector<std::string> search = {
+        artist + str(), // We want to both search for artist - title as well as title - artist
+        genre,
+        edition,
+        path.string(),
+    };
+
+    for (std::string str : search) {
+        str.erase(std::remove_if(str.begin(), str.end(),
+            [](auto const& c) -> bool { return !std::isalnum(c); }), str.end());
+        if (searchStr != "") {
+            searchStr += "\n";
+        }
+        searchStr += str;
+    }
+    return searchStr;
+}
+
 std::vector<std::string> Song::getVocalTrackNames() const {
     std::vector<std::string> result;
     for (auto const& kv : vocalTracks) result.push_back(kv.first);

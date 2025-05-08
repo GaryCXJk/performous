@@ -110,6 +110,7 @@ public:
 	void eraseVocalTrack(std::string vocalTrack = TrackName::VOCAL_LEAD);
 	std::string str() const;  ///< Return "title by artist" string for UI
 	std::string strFull() const;  ///< Return multi-line full song info (used for searching)
+	std::string strSearch() const;  ///< Return full song info with everything except alphanumeric characters stripped (used for searching)
 	/** Get the song status at a given timestamp **/
 	Status status(double time, ScreenSing* song);
 	// Get a selected track, or VOCAL_LEAD if not found or the first one if not found
