@@ -243,6 +243,24 @@ void RequestHandler::Get(web::http::http_request request)
 		request.reply(web::http::status_codes::OK, songObject);
 		return;
 	}
+	else if (path == "/api/skip") {
+		try {
+			m_game.activateScreen("Playlist");
+
+			request.reply(web::http::status_codes::OK, "success");
+			return;
+		}
+		catch (web::json::json_exception const& e) {
+			std::string str = std::string("JSON Exception: ") + e.what();
+			request.reply(web::http::status_codes::BadRequest, str);
+			return;
+		}
+		catch (const std::exception& e) {
+			std::string str = std::string("Exception: ") + e.what();
+			request.reply(web::http::status_codes::BadRequest, str);
+			return;
+		}
+	}
 	else {
 		HandleFile(request);
 	}
@@ -511,6 +529,9 @@ std::vector<std::string> RequestHandler::GetTranslationKeys() {
 		translate_noop("Language"),
 		translate_noop("Edition"),
 		translate_noop("Creator"),
+		translate_noop("Comment"),
+		translate_noop("Year"),
+		translate_noop("Wait time"),
 		translate_noop("Sort order"),
 		translate_noop("Normal"),
 		translate_noop("Inverted"),
@@ -519,18 +540,28 @@ std::vector<std::string> RequestHandler::GetTranslationKeys() {
 		translate_noop("Upcoming songs"),
 		translate_noop("Refresh playlist"),
 		translate_noop("Performous has disconnected."),
+		translate_noop("Reconnect"),
 		translate_noop("A previous playlist has been found."),
 		translate_noop("Restore playlist"),
 		translate_noop("Remove playlist"),
 		translate_noop("Web interface by Niek Nooijens and Arjan Speiard, for full credits regarding Performous see /docs/Authors.txt"),
+		translate_noop("List"),
+		translate_noop("Queue"),
+		translate_noop("Playlists"),
+		translate_noop("Languages"),
 		translate_noop("Search"),
 		translate_noop("Available songs"),
 		translate_noop("Search for songs"),
 		translate_noop("Yes"),
 		translate_noop("No"),
+		translate_noop("Play song"),
+		translate_noop("Restart"),
+		translate_noop("Skip"),
 		translate_noop("Move up"),
 		translate_noop("Move down"),
 		translate_noop("Set position"),
+		translate_noop("Add song"),
+		translate_noop("Play song next"),
 		translate_noop("Remove song"),
 		translate_noop("Desired position of song"),
 		translate_noop("Cancel"),
