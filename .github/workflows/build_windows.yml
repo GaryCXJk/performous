@@ -88,7 +88,72 @@ jobs:
   # Pull in the Windows build workflow
   Windows_Packages:
     name: Build the Windows packages
-    uses: ./.github/workflows/windows.yml
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - name: Checkout Git
+        id: checkout_git
+        uses: actions/checkout@v4
+        with:
+          path: performous
+
+
+      - name: Setup our dev environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Setup ninja cmake generator
+        uses: abdes/gha-setup-ninja@master
+
+      - name: Download and build our dependencies using vcpkg
+        uses: Lord-Kamina/vcpkg-action@update_cache
+        with:
+          pkgs: "\"aubio[core,tools]\" \"boost-algorithm[core]\" \"boost-align[core]\" \"boost-any[core]\" \"boost-array[core]\" \"boost-assert[core]\" \"boost-asio\" \"boost-atomic[core]\" \"boost-bind[core]\" \"boost-build[core]\" \"boost-chrono[core]\" \"boost-concept-check[core]\" \"boost-config[core]\" \"boost-container[core]\" \"boost-container-hash[core]\" \"boost-conversion[core]\" \"boost-core[core]\" \"boost-date-time[core]\" \"boost-detail[core]\" \"boost-dynamic-bitset[core]\" \"boost-exception[core]\" \"boost-function[core]\" \"boost-function-types[core]\" \"boost-fusion[core]\" \"boost-integer[core]\" \"boost-intrusive[core]\" \"boost-io[core]\" \"boost-iostreams[bzip2,core,lzma,zlib,zstd]\" \"boost-iterator[core]\" \"boost-lexical-cast[core]\" \"boost-locale[core]\" \"boost-move[core]\" \"boost-mp11[core]\" \"boost-mpl[core]\" \"boost-numeric-conversion[core]\" \"boost-optional[core]\" \"boost-predef[core]\" \"boost-preprocessor[core]\" \"boost-program-options[core]\" \"boost-random[core]\" \"boost-range[core]\" \"boost-ratio[core]\" \"boost-rational[core]\" \"boost-regex[core]\" \"boost-smart-ptr[core]\" \"boost-static-assert[core]\" \"boost-system[core]\" \"boost-thread[core]\" \"boost-throw-exception[core]\" \"boost-tokenizer[core]\" \"boost-tuple[core]\" \"boost-type-index[core]\" \"boost-type-traits[core]\" \"boost-typeof[core]\" \"boost-uninstall[core]\" \"boost-unordered[core]\" \"boost-utility[core]\" \"boost-variant2[core]\" \"boost-winapi[core]\" \"brotli[core]\" \"bzip2[core,tool]\" \"cairo[core,fontconfig,freetype,gobject]\" \"dirent[core]\" \"expat[core]\" \"ffmpeg[avcodec,avdevice,avfilter,avformat,core,swresample,swscale]\" \"fftw3[core]\" \"fmt[core]\" \"fontconfig[core]\" \"freetype[brotli,bzip2,core,png,zlib]\" \"fribidi[core]\" \"gdk-pixbuf[core]\" \"getopt[core]\" \"getopt-win32[core]\" \"gettext[core,tools]\" \"glib[core]\" \"glibmm[core]\" \"glm[core]\" \"gperf[core]\" \"gtest[core]\" \"harfbuzz[core]\" \"icu[*]\" \"cpprestsdk[brotli,compression,core]\" \"libcroco[core]\" \"libepoxy[core]\" \"libffi[core]\" \"libflac[core]\" \"libiconv[core]\" \"libjpeg-turbo[core]\" \"liblzma[core]\" \"libogg[core]\" \"libpng[core]\" \"librsvg[core]\" \"libsigcpp[core]\" \"libsigcpp-3[core]\" \"libsndfile[core,external-libs,mpeg]\" \"libvorbis[core]\" \"libwebp[core,libwebpmux,nearlossless,simd,unicode]\" \"libxml2[core]\" \"libxmlpp[core]\" \"lzo[core]\" \"mp3lame[core]\" \"mpg123[core]\" \"nlohmann-json[core]\" \"openblas[core]\" \"opencv[core]\" \"opencv4[core,dnn,jpeg,png,quirc,tiff,webp]\" \"openssl[core]\" \"opus[core]\" \"pango[core]\" \"pcre[core]\" \"pcre2[core]\" \"pixman[core]\" \"pkgconf[core]\" \"portaudio[core]\" \"portmidi[core]\" \"protobuf[core]\" \"pthread[core]\" \"pthreads[core]\" \"quirc[core]\" \"sdl2[core]\" \"tiff[core,jpeg,lzma,zip]\"  \"yasm[core,tools]\" \"yasm-tool-helper[core]\" \"zlib[core]\" \"zstd[core]\" \"spdlog[core]\""
+          triplet: x64-windows-release
+          extra-args: '--clean-after-build --overlay-triplets="${{ github.workspace }}\performous\cmake\triplets"'
+          cache-key: win64-vcpkg
+          debug: true
+          revision: bc994510d2eb11aac7b43b03f67a7751d5bfe0e4
+          api-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run cmake to configure the project and build it
+        env:
+          PERFORMOUS_VERSION: ${{ inputs.package_complete_version }}
+        run: |
+          set VCPKG_BINARY_SOURCES="files,${{ github.workspace }}\vcpkg_cache,read"
+          cd ${{ github.workspace }}/performous
+          echo $PERFORMOUS_VERSION
+          cmake --preset "windows-x64-debinfo" -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-release -DVCPKG_OVERLAY_TRIPLETS="${{ github.workspace }}\performous\cmake\triplets"
+          cmake --build --preset "windows-x64-debinfo"
+      - name: Run unittests directly called.
+        run: |
+          cd "performous/build/windows-x64-debinfo/testing"
+          ./performous_test.exe --gtest_filter=UnitTest*
+      - name: Run unittests by ctest.
+        run: |
+          cd "performous/build/windows-x64-debinfo"
+          ninja testing/test
+      - name: Create Installer
+        id: package_performous_x64
+        run: |
+          cd performous/build/windows-x64-debinfo
+          cpack -G NSIS64 windows-x64-debinfo
+          $MASTER_ARTIFACT_FILENAME = "Performous-master[${{ inputs.package_complete_version }}]-msvc.exe"
+          $ARTIFACT_FILENAME = "Performous-${{ inputs.package_complete_version }}-msvc.exe"
+          Copy-Item $(Get-ChildItem -Filter '*win64.exe').Name $MASTER_ARTIFACT_FILENAME
+          Rename-Item $(Get-ChildItem -Filter '*win64.exe').Name -NewName $ARTIFACT_FILENAME
+          chcp 65001 #set code page to utf-8
+          echo ("ARTIFACT_PATH=${{ github.workspace }}/performous/build/windows-x64-debinfo/$ARTIFACT_FILENAME") >> $env:GITHUB_ENV
+          echo ("ARTIFACT_FILENAME=$ARTIFACT_FILENAME") >> $env:GITHUB_ENV
+          echo ("MASTER_ARTIFACT_PATH=${{ github.workspace }}/performous/build/windows-x64-debinfo/$MASTER_ARTIFACT_FILENAME") >> $env:GITHUB_ENV
+          echo ("MASTER_ARTIFACT_FILENAME=$MASTER_ARTIFACT_FILENAME") >> $env:GITHUB_ENV
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_FILENAME }}
+          path: ${{ env.ARTIFACT_PATH }}
     with:
       package_complete_version: ${{ needs.determine_version.outputs.complete_version }}
       release_id: ${{ needs.create_release.outputs.release_id }}
