@@ -1,4 +1,4 @@
-name: Build and Release Performous
+name: Manually Build Windows Performous
 
 # Controls when the workflow will run
 on:
