@@ -119,7 +119,7 @@ jobs:
 
       - name: Run cmake to configure the project and build it
         env:
-          PERFORMOUS_VERSION: ${{ inputs.package_complete_version }}
+          PERFORMOUS_VERSION: ${{ needs.determine_version.outputs.complete_version }}
         run: |
           set VCPKG_BINARY_SOURCES="files,${{ github.workspace }}\vcpkg_cache,read"
           cd ${{ github.workspace }}/performous
@@ -139,8 +139,8 @@ jobs:
         run: |
           cd performous/build/windows-x64-debinfo
           cpack -G NSIS64 windows-x64-debinfo
-          $MASTER_ARTIFACT_FILENAME = "Performous-master[${{ inputs.package_complete_version }}]-msvc.exe"
-          $ARTIFACT_FILENAME = "Performous-${{ inputs.package_complete_version }}-msvc.exe"
+          $MASTER_ARTIFACT_FILENAME = "Performous-master[${{ needs.determine_version.outputs.complete_version }}]-msvc.exe"
+          $ARTIFACT_FILENAME = "Performous-${{ needs.determine_version.outputs.complete_version }}-msvc.exe"
           Copy-Item $(Get-ChildItem -Filter '*win64.exe').Name $MASTER_ARTIFACT_FILENAME
           Rename-Item $(Get-ChildItem -Filter '*win64.exe').Name -NewName $ARTIFACT_FILENAME
           chcp 65001 #set code page to utf-8
@@ -154,9 +154,6 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_FILENAME }}
           path: ${{ env.ARTIFACT_PATH }}
-    with:
-      package_complete_version: ${{ needs.determine_version.outputs.complete_version }}
-      release_id: ${{ needs.create_release.outputs.release_id }}
     needs:
       - determine_version
       - create_release
