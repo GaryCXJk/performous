@@ -472,6 +472,7 @@ web::json::value RequestHandler::SongsToJsonObject(size_t start, size_t limit) {
 	web::json::value jsonRoot = web::json::value::array();
 	for (size_t i = startIndex; i < endIndex; i++) {
 		web::json::value songObject = web::json::value::object();
+		
 		songObject[utility::conversions::to_string_t("Title")] = web::json::value::string(utility::conversions::to_string_t(m_songs[i]->title));
 		songObject[utility::conversions::to_string_t("Artist")] = web::json::value::string(utility::conversions::to_string_t(m_songs[i]->artist));
 		songObject[utility::conversions::to_string_t("Edition")] = web::json::value::string(utility::conversions::to_string_t(m_songs[i]->edition));
