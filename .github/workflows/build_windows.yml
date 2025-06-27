@@ -179,3 +179,5 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: booth-frontend
+    needs:
+      - Windows_Packages
