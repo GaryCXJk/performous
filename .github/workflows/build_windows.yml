@@ -175,6 +175,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Removing artifacts
+        uses: geekyeggo/delete-artifact@v5
         if: ${{ !cancelled() }}
         with:
           name: booth-frontend
