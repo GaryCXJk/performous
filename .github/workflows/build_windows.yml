@@ -89,9 +89,6 @@ jobs:
   booth_frontend:
     name: Build the Booth frontend
     uses: ./.github/workflows/booth_frontend.yml
-    needs:
-      - determine_version
-      - create_release
 
   # Pull in the Windows build workflow
   Windows_Packages:
@@ -172,3 +169,15 @@ jobs:
       - determine_version
       - create_release
       - booth_frontend
+
+  cleanup_artifact:
+    name: Remove the Booth frontend artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Removing artifacts
+        uses: geekyeggo/delete-artifact@v5
+        if: ${{ !cancelled() }}
+        with:
+          name: booth-frontend
+    needs:
+      - Windows_Packages
