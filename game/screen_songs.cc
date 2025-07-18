@@ -95,6 +95,8 @@ void ScreenSongs::manageEvent(input::NavEvent const& event) {
 		if (m_menu.isOpen()) m_menu.move(1);
 		else menuBrowse(Songs::SortChange::FORWARD);
 	}
+	else if (nav == input::NavButton::HOME) m_songs.setToTarget(0);
+	else if (nav == input::NavButton::END) m_songs.setToTarget(-1);
 	else if (nav == input::NavButton::MOREUP) m_songs.advance(-10);
 	else if (nav == input::NavButton::MOREDOWN) m_songs.advance(10);
 	else if (m_jukebox) {
@@ -371,7 +373,7 @@ std::string ScreenSongs::getHighScoreText() const {
 	std::string ret;
 	auto n = 0;
 	for (auto const& [track, scores]: scoresByTrack) {
-		fmt::format_to(std::back_inserter(ret), "{}:\n");
+		fmt::format_to(std::back_inserter(ret), "{}:\n", track);
 		for (auto const& score: scores) {
 			fmt::format_to(std::back_inserter(ret), "{:0>10L}\t", score.score);
 			playerFormatter(ret, score.playerid);
